@@ -1,0 +1,11 @@
+{
+  "additionalFiles": "/Build/sketch/wenu-esp8266firmware-2.ino.cpp,/NTPClient.h,/ntp_sync.h,/ntp_sync2.h,/rutinas_firmware.h",
+  "builtInLibrariesFolders": "/Applications/Arduino.app/Contents/Java/libraries",
+  "customBuildProperties": "build.path=/Users/matiasbarrios/Desktop/wenu-esp8266firmware-2/Build,build.warn_data_percentage=75,runtime.tools.xtensa-lx106-elf-gcc.path=/Users/matiasbarrios/Library/Arduino15/packages/esp8266/tools/xtensa-lx106-elf-gcc/2.5.0-3-20ed2b9,runtime.tools.xtensa-lx106-elf-gcc-2.5.0-3-20ed2b9.path=/Users/matiasbarrios/Library/Arduino15/packages/esp8266/tools/xtensa-lx106-elf-gcc/2.5.0-3-20ed2b9,runtime.tools.mkspiffs.path=/Users/matiasbarrios/Library/Arduino15/packages/esp8266/tools/mkspiffs/2.5.0-3-20ed2b9,runtime.tools.mkspiffs-2.5.0-3-20ed2b9.path=/Users/matiasbarrios/Library/Arduino15/packages/esp8266/tools/mkspiffs/2.5.0-3-20ed2b9,runtime.tools.esptool.path=/Users/matiasbarrios/Library/Arduino15/packages/esp8266/tools/esptool/2.5.0-3-20ed2b9,runtime.tools.esptool-2.5.0-3-20ed2b9.path=/Users/matiasbarrios/Library/Arduino15/packages/esp8266/tools/esptool/2.5.0-3-20ed2b9",
+  "fqbn": "esp8266:esp8266:nodemcu:xtal=80,vt=flash,exception=enabled,eesz=4M,ip=lm2f,dbg=Disabled,lvl=None____,wipe=none,baud=115200",
+  "hardwareFolders": "/Applications/Arduino.app/Contents/Java/hardware,/Users/matiasbarrios/Library/Arduino15/packages,/Users/matiasbarrios/Documents/Arduino/hardware",
+  "otherLibrariesFolders": "/Users/matiasbarrios/Documents/Arduino/libraries",
+  "runtime.ide.version": "10808",
+  "sketchLocation": "/Users/matiasbarrios/Desktop/wenu-esp8266firmware-2/wenu-esp8266firmware-2.ino",
+  "toolsFolders": "/Applications/Arduino.app/Contents/Java/tools-builder,/Applications/Arduino.app/Contents/Java/hardware/tools/avr,/Users/matiasbarrios/Library/Arduino15/packages"
+}
