@@ -1,0 +1,11 @@
+{
+    "files.associations": {
+        "stdexcept": "cpp",
+        "__bit_reference": "cpp",
+        "__split_buffer": "cpp",
+        "initializer_list": "cpp",
+        "iterator": "cpp",
+        "list": "cpp",
+        "vector": "cpp"
+    }
+}

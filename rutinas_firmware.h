@@ -5,6 +5,8 @@
 #include <WiFiClient.h>
 #include <WiFiUdp.h>
 #include <EasyNTPClient.h>
+#include <string.h>
+#include <Ticker.h>
 
 
 //===============================================================
@@ -14,20 +16,29 @@ extern const char* ssid;
 extern const char* password;
 extern ESP8266WebServer server;
 extern char* accessPassword;
-extern String wifiId;
+extern char* accessSSID;
+extern char* wifiId;
+extern char* accessGate;
+extern char* clockURL;
 
+//===============================================================
+// Variables para Ticker
+// askForDataToArduino: Ticker para enviar un # al arduino
+// cada 15 segundos al arduino para que este envíe información.
+// 
+//===============================================================
+Ticker askForDataToArduino;
 
-// //===============================================================
-// // Variables externas
-// //===============================================================
+//===============================================================
+// Variables para NTP
+//===============================================================
 WiFiUDP udp;
 EasyNTPClient ntpClient(udp, "clock.wenu.cl");
-
 
 //===============================================================
 // Prototipos de funciones 
 //===============================================================
-void setupAccessPoint(char* ap_name,char* ap_password); 
+void setupAccessPoint(char* _ssid, char* _password); 
 void saveCredentials(String _ssid, String _password);
 
 
@@ -57,8 +68,6 @@ const char MAIN_page[] PROGMEM = R"=====(
 //                    FUNCIONES
 //===============================================================================================
 
-
-
 //===============================================================
 // Rutina que se ejecuta para llamar a la página web para configuración
 //===============================================================
@@ -70,71 +79,80 @@ void handleRoot() {
 
 //===============================================================
 // Rutina para conexión a nuevo WiFi
+// Recibe como parámetros ssid y password.
+// Retorna true si es que la conexión fue exitosa.
 //===============================================================
 
-void handleConnection(){
-  WiFi.begin(ssid, password);     //Connect to your WiFi router
+bool connectToWifi(const char* _ssid, const char* _password){
+  WiFi.begin(_ssid, _password);
   Serial.println("");
   
-  // Wait for connection
+  //Esperar la conexión
   while (WiFi.status() != WL_CONNECTED) {
     delay(500);
     Serial.print(".");
   }
 
-  //If connection successful show IP address in serial monitor
   Serial.println("");
   Serial.print("Connected to ");
-  Serial.println(ssid);
+  Serial.println(_ssid);
   Serial.print("IP address: ");
-  Serial.println(WiFi.localIP());  //IP address assigned to your ESP
+  Serial.println(WiFi.localIP());
+  return true;
 }
 
 //===============================================================
 // Rutina para obtención de SSID y password desde página web
 //===============================================================
 void handleConfigure() { 
+  //Verificar si es que el usuario ingresó ambos parámetros.
   if(server.arg("ssid")=="" || server.arg("password")==""){
      String message = "Ingrese SSID y password";
-     server.send(400, "text/plain", message);       //Response to the HTTP request
+     server.send(400, "text/plain", message);
      return;
   }
   
-  //Convertir String a char*
-  ssid = server.arg("ssid").c_str();
-  password = server.arg("password").c_str();
+  
+  // Conectarse a la nueva red de WiFi
+  // Ingresa los parámetros ingresados en la página web como 
+  // argumentos de connectToWifi, que regresa true si la conexión fue exitosa.
+  // Si la conexión fue exitosa, entonces guarda las credenciales.
+  if (connectToWifi(server.arg("ssid").c_str(),server.arg("password").c_str())){
+    ssid = server.arg("ssid").c_str();
+    password = server.arg("password").c_str();    
+  }
 
   //Guardar las credenciales (PENDIENTE)
   // saveCredentials(server.arg("ssid"),server.arg("password"));
   
-  //Conectarse a la nueva red de WiFi
-  handleConnection();
  
   //Mensaje para mostrarse en página Web una vez que se ingresó el SSID y el password.
   String message = "Conectado a: " + (String)ssid + ", con password: "+ (String)password; 
   server.send(200, "text/plain", message);       //Response to the HTTP request
   
   //Cambiar las credenciales del AP del ESP8266
-  /*
-   * !!!!!!!CAMBIAR ESTA LINEA CUANDO SE QUIERA PASAR A FIRMWARE BASE!!!!!
-   */
-  //setupAccessPoint("Wenu-"+wifiId,accessPassword);
-
-  // setupAccessPoint("Wenu-2",accessPassword);
+  // setupAccessPoint(accessSSID,accessPassword);
+ 
 }
 
-//===============================================================
-// Rutina para configuración de ESP8266 como Access Point
-//===============================================================
-void setupAccessPoint(char* ap_name,char* ap_password) {
-  IPAddress gateway(192, 168, 4, 1);
+//======================================================================
+// Rutina para configuración de ESP8266 como Access Point Y Station mode
+//======================================================================
+void setupAccessPoint(char* _ssid, char* _password) {
+  //Separar accessGate por punto para ingresarlo como default gateway
+  //MODIFICAR PARA OBTENER GATEWAY DESDE accessGate
+  // char* _gateway = strtok(accessGate,".");
+  IPAddress gateway(192,168 ,4, 1);
   IPAddress subnet(255, 255, 255, 0);
+  
+  //Activar el ESP8266 en modo AP y STA
   WiFi.mode(WIFI_STA);
   if(!WiFi.softAPConfig(gateway, gateway, subnet)){
     Serial.println("Configuración de AP falló"); 
   }
   
-  boolean result = WiFi.softAP(ap_name, ap_password);
+  //Establecer ssid y password del AP
+  boolean result = WiFi.softAP(_ssid, _password);
   if(result == true){
     Serial.println("Ready");
   }
@@ -142,6 +160,16 @@ void setupAccessPoint(char* ap_name,char* ap_password) {
     Serial.println("Failed!");
   }
 }
+
+//====================================================================
+// Funcion para el Ticker, que envía un # al Arduino cada 15 segundos
+// para que este le envíe información al ESP8266.
+//====================================================================
+void startCommunication() {
+  Serial.println("#");
+}
+
+
 
 //===============================================================
 // Guardar las credenciales en EEPROM

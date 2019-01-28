@@ -1,0 +1,63 @@
+*fard=3.2,id=1,bi=0,v=9.3,i1=0.00,p1=0.0$_*fard=3.2,id=1,bi=0,v=9.3,i1=0.00,p1=0.0$_*fard=3.2,id=1,bi=0,v=9.3,i1=0.00,p1=0.0$
+
+
+void send_data(void){
+  
+  // HV Structure for retro compatibility
+  // Phase A
+  Serial.print("*fard=");
+  Serial.print(FIRM_V, 1);
+  Serial.print(",id="+wifiId);
+  Serial.print(",bi=");
+  Serial.print(0);
+  Serial.print(",v=");
+  Serial.print(end_voltage[0], 1);
+  Serial.print(",i1=");
+  Serial.print(end_current[0], 2);
+  Serial.print(",p1=");
+  Serial.print(end_active_power[0], 1);
+  
+  // End Of String Protocol for retro compatibility
+  Serial.print("$");
+
+  // Separator 
+  Serial.print("_");
+
+  // Phase B
+  Serial.print("*fard=");
+  Serial.print(FIRM_V, 1);
+  Serial.print(",id="+wifiId);
+  Serial.print(",bi=");
+  Serial.print(0);
+  Serial.print(",v=");
+  Serial.print(end_voltage[1], 1);
+  Serial.print(",i1=");
+  Serial.print(end_current[1], 2);
+  Serial.print(",p1=");
+  Serial.print(end_active_power[1], 1);
+
+  // End Of String Protocol for retro compatibility
+  Serial.print("$");
+
+  // Separator 
+  Serial.print("_");
+
+  // Phase C
+ ºSerial.print("*fard=");
+  Serial.print(FIRM_V, 1);
+  Serial.print(",id="+wifiId);
+  Serial.print(",bi=");
+  Serial.print(0);
+  Serial.print(",v=");
+  Serial.print(end_voltage[2], 1);
+  Serial.print(",i1=");
+  Serial.print(end_current[2], 2);
+  Serial.print(",p1=");
+  Serial.print(end_active_power[2], 1);
+
+  // End Of String Protocol for retro compatibility
+  Serial.print("$");
+
+  // End of protocol
+  Serial.println("");  
+}
