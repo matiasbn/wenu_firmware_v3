@@ -7,6 +7,8 @@
 #include <EasyNTPClient.h>
 #include <string.h>
 #include <Ticker.h>
+#include <base64.h>
+#include "aes_encryption.h"
 
 
 //===============================================================
@@ -20,6 +22,8 @@ extern char* accessSSID;
 extern char* wifiId;
 extern char* accessGate;
 extern char* clockURL;
+extern char* FIRM_V;
+extern char* keyCrypto;
 
 //===============================================================
 // Variables para Ticker
@@ -165,29 +169,72 @@ void setupAccessPoint(char* _ssid, char* _password) {
 // Funcion para el Ticker, que envía un # al Arduino cada 15 segundos
 // para que este le envíe información al ESP8266.
 //====================================================================
-void startCommunication() {
+void sendHashTag() {
   Serial.println("#");
 }
 
 
+//=========================================================================
+//Función para encriptar y dar formato a la trama recibida desde el Arduino
+//=========================================================================
+String encryptAndFormat(String _message){
+  //Crear el vector de inicialización.
+  aes_init();
+  // generateIv(iv);
+  // runnable();
 
-//===============================================================
-// Guardar las credenciales en EEPROM
-//===============================================================
-void saveCredentials(String _ssid, String _password) {
-  // EEPROM.begin(512);
-  EEPROM.put(0, _ssid);
-  EEPROM.put(0+sizeof(_ssid), _password);
-  EEPROM.commit();
-  EEPROM.end();
+  // // Convertir String a char.
+  char messageToChar[_message.length()-1];
+  for(int i=0;i<_message.length();i++){
+    messageToChar[i] = _message[i];
+  }
+
+  //Encriptar el Mensaje y pasarlo a base64
+  String encryptedMessage = encrypt(messageToChar,aes_iv);
+
+  //IV a base64
+  String encoded = base64::encode("(char*)aes_iv");
+  Serial.println(encoded);
+
+  //Prints
+  Serial.println("Mensaje encriptado y en base64");
+  Serial.println(encryptedMessage);
+  Serial.println("Initizalization vector");
+  for(int i =0;i<N_BLOCK;i++){
+    Serial.print(aes_iv[i]);
+  }  
+  Serial.println("");
+  Serial.println("Llave privada");
+  // String privKey = String(aes_key); 
+  // Serial.println(privKey);
+  for(int i =0;i<N_BLOCK;i++){
+    Serial.print((char)aes_key[i]);
+  }  
+  
+  keyCryptoToHex(keyCrypto);
+
+  Serial.println("");
+  // Serial.println("");
+  return String("Hola");
 }
 
-//===============================================================
-// Obtener SSID y Password desde EEPROM
-//===============================================================
-void loadCredentials() {
-  // EEPROM.begin(512);
-  EEPROM.get(0, ssid);
-  EEPROM.get(0+sizeof(ssid), password);
-  EEPROM.end();
-}
+// //===============================================================
+// // Guardar las credenciales en EEPROM
+// //===============================================================
+// void saveCredentials(String _ssid, String _password) {
+//   // EEPROM.begin(512);
+//   EEPROM.put(0, _ssid);
+//   EEPROM.put(0+sizeof(_ssid), _password);
+//   EEPROM.commit();
+//   EEPROM.end();
+// }
+
+// //===============================================================
+// // Obtener SSID y Password desde EEPROM
+// //===============================================================
+// void loadCredentials() {
+//   // EEPROM.begin(512);
+//   EEPROM.get(0, ssid);
+//   EEPROM.get(0+sizeof(ssid), password);
+//   EEPROM.end();
+// }

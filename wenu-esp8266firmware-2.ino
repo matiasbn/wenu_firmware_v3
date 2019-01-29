@@ -9,12 +9,16 @@
 // serverURL:time es el servidor a donde apuntan los Wenu.
 // keyCrypto: llave privada de AES.
 
-
+//CAMBIO CON FIRMWARE
 // String wifiId = "WIFI_ID";
-char* wifiId = "7";
-char* keyMAC = "FIRM_HMAC";
+char* wifiId = "1451";
+//CAMBIO CON FIRMWARE
+// char* keyMAC = "FIRM_HMAC";
+char* keyMAC = "tJhJool";
 char* serverURL = "URL_SERVER";
-char* keyCrypto = "FIRM_CRYPTO";
+//CAMBIO CON FIRMWARE
+// char* keyCrypto = "FIRM_CRYPTO";
+char* keyCrypto = "Ei7rWfj0ffQZiXUu";
 
 //------------Parametros de configuracion fijos-------------------//
 //  Estos parámetros se ajustan de forma manual, dependiendo de lo siguiente:
@@ -27,6 +31,8 @@ char* keyCrypto = "FIRM_CRYPTO";
 //  accessGate: dirección del default gateway del AP del ESP8266.
 //  clockURL: servidor SNTP para sincronizar la hora, de forma que las tramas enviadas desde el ESP8266 tienen la hora
 //  en que fueron obtenidas y no la hora de llegada al servidor.
+//  DATAFRAME_AMOUNT: indica la cantidad de signos $ que debe tener la trama recibida
+//  por el ESP8266. Es 1 para el caso de monofásico y 3 para el caso de trifásico.
 
 
 char* FIRM_V = "3.0";
@@ -34,6 +40,8 @@ char* accessSSID=strcat("Wenu-",wifiId);;
 char* accessPassword = "28421759";
 char* accessGate = "192.168.4.1";
 char* clockURL = "clock.wenu.cl";
+int DATAFRAME_AMOUNT=3;
+
 
 
 //---------------------------------------------------------------
@@ -47,15 +55,18 @@ ESP8266WebServer server(80); //Server on port 80
 
 //----------------------------------------------------------------------------
 // Variables para comunicación serial.
-// incomingByte se utiliza para leer lo que el Arduino manda por puerto serie.
-// counterDataFrame se utiliza para contar la cantidad de tramas que han llegado
-// por puerto Serial.
+// incomingMessage es el mensaje que se obtiene desde el Arduino. Se comienza a guardar
+// cuando llega un * y se detiene cuando llegan tres $ para el caso de polifásico
+// y un $ para el caso de monofásico.
+// discard se utiliza para descartar o no el paquete dependiendo de las verificaciones
+// hechas en loop.
+// formattedMessage es el mensaje encriptado y con formato adecuado para ser tratado
+// en backend.
 //----------------------------------------------------------------------------
-char incomingByte;
-char* message;
 int counterDataFrame=0;
-
-
+String incomingMessage;
+bool discard = false;
+String formattedMessage;
 
 
 //==============================================================
@@ -75,6 +86,13 @@ void setup(void){
   //Configurar el ESP para cuando el usuario ingrese SSID y pass
   server.on("/configure", handleConfigure);
 
+  //Setear la cantidad de DATAFRAME_AMOUNT si es que es monofásico
+
+  //CAMBIO CON FIRMWARE
+  // if(FIRM_V=="1.0"){
+  //   DATAFRAME_AMOUNT = 1;
+
+  // }
 
   server.begin();
   Serial.println("HTTP server started");
@@ -86,9 +104,11 @@ void setup(void){
   // Serial.println("Password" + password);
 
   //Ticker que envia
-  askForDataToArduino.attach(3,startCommunication);
+  // askForDataToArduino.attach(15,sendHashTag);
 
 }
+
+
 //==============================================================
 //                     LOOP
 //==============================================================
@@ -98,24 +118,37 @@ void loop(void){
   //Funciones para NTP
   //Serial.println(ntpClient.getUnixTime());
 
-  if (Serial.available()>0 && Serial.read()=="*"){
-    while(Serial.available()>0) {
-  
 
+  //Las funciones de encriptación y envió deben ocurrir dentro de este if,
+  //ya que si no, estas se ejecutarán con cada vuelta del loop 
+  if (Serial.available()>0){
+    
+    //Recibir todo el mensaje hasta que se encuentra con '\0'
+    incomingMessage = Serial.readStringUntil('\0');
 
-      // Contar la cantidad de tramas mediante el separador $
-      if(Serial.read()=="$"){
+    //Contar la cantidad de símbolos $
+    for(int i =0; i<incomingMessage.length();i++){
+      if(incomingMessage[i]=='$'){
         counterDataFrame++;
       }
+    }
 
-      //Cuando llega la tercera trama, romper el ciclo
-      if(counterDataFrame==2){
-        break;
-      
-      //Imprimir en puerto serie
-      Serial.print("I received: ");
-      Serial.println(incomingByte);
-      }
+    //Descartar si es que no llegaron los tres $ 
+    // o si no comienza con un *.
+    if(counterDataFrame!=DATAFRAME_AMOUNT || incomingMessage[0]!='*'){
+      discard = true;
+    }
+
+    //Si no se debe descartar la trama, se encripta y se da formato.
+    //Si se descarta
+    if(!discard){
+      formattedMessage = encryptAndFormat(incomingMessage);
+      // encryptAndFormat(incomingMessage);
+      Serial.println("El mensaje con formato es: "+formattedMessage);
     }
   }
+  
+  //Volver al estado inicial para la próxima trama
+  counterDataFrame=0;
+  discard=false;
 }
